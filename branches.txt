@@ -1,0 +1,42 @@
+
+branches
+========
+
+main
+----
+    git merge patch*
+    git merge customise
+    git rebase upstream
+
+patch*
+------
+to make a patch branch:
+
+    git checkout -b patch{name} upstream
+    curl {url}|patch --no-backup-if-mismatch
+
+upstream
+--------
+<https://dwm.suckless.org/customisation/patches_in_git>
+
+    git remote add upstream git://git.suckless.org/dwm
+
+to fetch upstream changes:
+
+    git checkout upstream
+    git pull upstream master
+
+i.e. this branch tracks suckless master when fetching
+
+customise
+---------
+patch* commits do not go to this branch
+
+    git diff upstream >delta
+    git checkout -b {new} upstream
+    git apply delta
+
+stage
+-----
+    git checkout -b stage main
+

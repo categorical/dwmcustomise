@@ -61,7 +61,7 @@
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
-enum { SchemeNorm, SchemeSel }; /* color schemes */
+enum { SchemeNorm, SchemeSel,SchemeRgb}; /* color schemes */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
        NetWMWindowTypeDialog, NetClientList, NetLast }; /* EWMH atoms */
@@ -244,6 +244,9 @@ static char stext[256];
 static int screen;
 static int sw, sh;           /* X display screen geometry width, height */
 static int bh, blw = 0;      /* bar geometry */
+static int brsw=0;  // bar right status width
+static int blsw=0;  // bar left status width
+static int btsw=0;   // width of tags and symbol section
 static int lrpad;            /* sum of left and right padding for text */
 static int (*xerrorxlib)(Display *, XErrorEvent *);
 static unsigned int numlockmask = 0;
@@ -441,7 +444,23 @@ buttonpress(XEvent *e)
 		focus(NULL);
 	}
 	if (ev->window == selmon->barwin) {
-		i = x = 0;
+		if(showbar==2){
+            if(ev->x<blsw||ev->x>=selmon->ww-brsw){
+                click = ClkStatusText;
+            }else if (ev->x>=(x=selmon->ww-brsw-btsw)){
+                i = 0;
+                do
+    			    x += TEXTW(tags[i]);
+    		    while (ev->x >= x && ++i < LENGTH(tags));
+    		    if (i < LENGTH(tags)) {
+    			    click = ClkTagBar;
+    			    arg.ui = 1 << i;
+    		    } else
+    			    click = ClkLtSymbol;
+            }else
+    			click = ClkWinTitle;
+        }else{
+        i = x = 0;
 		do
 			x += TEXTW(tags[i]);
 		while (ev->x >= x && ++i < LENGTH(tags));
@@ -454,6 +473,7 @@ buttonpress(XEvent *e)
 			click = ClkStatusText;
 		else
 			click = ClkWinTitle;
+        }
 	} else if ((c = wintoclient(ev->window))) {
 		focus(c);
 		restack(selmon);
@@ -715,6 +735,77 @@ drawbar(Monitor *m)
 
 	if (!m->showbar)
 		return;
+
+    if (m->showbar==2){
+/*  +---------------+-----------+-------+-------+---------------+
+ *  |status left    |title      |tags   |symbol |status right   |
+ *  +---------------+-----------+-------+-------+---------------+
+ *  |border                                                     |
+ *  +-----------------------------------------------------------+
+ */
+    // border
+    int rh=bh-1;
+    //drw_setscheme(drw, scheme[SchemeRgb]);
+    //XSetForeground(drw->dpy, drw->gc,drw->scheme[ColFg].pixel);
+    //XFillRectangle(drw->dpy, drw->drawable, drw->gc, 0, 0, m->ww, bh);
+    rh=bh;
+
+    // status
+    int rw=0,cw=0,lw=0;
+    int rp=2,lp=2;
+    if (m == selmon) {
+        char *rstext,*lstext,*cstext;
+        rstext=strdup(stext);lstext=strsep(&rstext,"}");cstext=strsep(&rstext,"{");
+		drw_setscheme(drw, scheme[SchemeNorm]);
+        blsw=TEXTW(lstext)-lrpad+rp+lp;
+        lw=m->ww;
+        drw_text(drw,0,0,lw,rh,lp,lstext,0);
+        if(rstext){
+            rw=brsw=TEXTW(rstext)-lrpad+rp+lp;
+            drw_text(drw,m->ww-rw,0,rw,rh,lp,rstext,0);
+        }
+	}
+    // tags
+	for (c = m->clients; c; c = c->next) {
+		occ |= c->tags;
+		if (c->isurgent)
+			urg |= c->tags;
+	}
+	int tsw=0;
+    for(i=0;i<LENGTH(tags);i++)tsw+=TEXTW(tags[i]);tsw+=TEXTW(m->ltsymbol);
+    btsw=tsw;
+    x = m->ww-tsw-rw;
+	for (i = 0; i < LENGTH(tags); i++) {
+		w = TEXTW(tags[i]);
+		drw_setscheme(drw, scheme[m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm]);
+		drw_text(drw, x, 0, w, rh, lrpad / 2, tags[i], urg & 1 << i);
+		if (occ & 1 << i)
+			drw_rect(drw, x + boxs, boxs, boxw, boxw,
+				m == selmon && selmon->sel && selmon->sel->tags & 1 << i,
+				urg & 1 << i);
+		x += w;
+	}
+    // symbol
+	w = blw = TEXTW(m->ltsymbol);
+	drw_setscheme(drw, scheme[SchemeNorm]);
+	x = drw_text(drw, x, 0, w, rh, lrpad / 2, m->ltsymbol, 0);
+    // title
+    //w=m->ww-lw-rw-tsw;x=lw;
+    w=TEXTW(m->sel->name);x=(m->ww-w)*.5;
+	if (w > rh) {
+		if (m->sel) {
+			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
+			drw_text(drw, x, 0, w, rh, lrpad / 2, m->sel->name, 0);
+			if (m->sel->isfloating)
+				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
+		} else {
+			drw_setscheme(drw, scheme[SchemeNorm]);
+			drw_rect(drw, x, 0, w, rh, 1, 1);
+		}
+	}
+	drw_map(drw, m->barwin, 0, 0, m->ww, bh);
+    return;
+    }
 
 	/* draw status first so it can be overdrawn by tags later */
 	if (m == selmon) { /* status is only drawn on selected monitor */
