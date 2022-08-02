@@ -238,6 +238,7 @@ static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void xinitvisual();
 static void zoom(const Arg *arg);
 
+
 /* variables */
 static const char broken[] = "broken";
 static char stext[256];
@@ -444,7 +445,7 @@ buttonpress(XEvent *e)
 		focus(NULL);
 	}
 	if (ev->window == selmon->barwin) {
-		if(showbar==2){
+		if(m->showbar>1){
             if(ev->x<blsw||ev->x>=selmon->ww-brsw){
                 click = ClkStatusText;
             }else if (ev->x>=(x=selmon->ww-brsw-btsw)){
@@ -736,19 +737,27 @@ drawbar(Monitor *m)
 	if (!m->showbar)
 		return;
 
-    if (m->showbar==2){
-/*  +---------------+-----------+-------+-------+---------------+
+    if (m->showbar>1){
+/*  
+ *  showbar==2
+ *  +---------------+-----------+-------+-------+---------------+
  *  |status left    |title      |tags   |symbol |status right   |
  *  +---------------+-----------+-------+-------+---------------+
  *  |border                                                     |
  *  +-----------------------------------------------------------+
- */
+ *  showbar==3
+ *  +---------------+---------------------------+---------------+
+ *  |status left    |           title           |status right   |
+ *  +---------------+---------------------------+---------------+
+ *  |border                                                     |
+ *  +-----------------------------------------------------------+
+ */ 
+
     // border
-    int rh=bh-1;
-    //drw_setscheme(drw, scheme[SchemeRgb]);
-    //XSetForeground(drw->dpy, drw->gc,drw->scheme[ColFg].pixel);
-    //XFillRectangle(drw->dpy, drw->drawable, drw->gc, 0, 0, m->ww, bh);
-    rh=bh;
+    int rh=bh-bbbpx;
+    drw_setscheme(drw, scheme[SchemeNorm]);
+    XSetForeground(drw->dpy, drw->gc,drw->scheme[ColFg].pixel);
+    XFillRectangle(drw->dpy, drw->drawable, drw->gc, 0, 0, m->ww, bh);
 
     // status
     int rw=0,cw=0,lw=0;
@@ -765,13 +774,16 @@ drawbar(Monitor *m)
             drw_text(drw,m->ww-rw,0,rw,rh,lp,rstext,0);
         }
 	}
+    
     // tags
+    int tsw=0;
+    if (m->showbar>2)btsw=0; // removes tags and symbol section
+    else{
 	for (c = m->clients; c; c = c->next) {
 		occ |= c->tags;
 		if (c->isurgent)
 			urg |= c->tags;
 	}
-	int tsw=0;
     for(i=0;i<LENGTH(tags);i++)tsw+=TEXTW(tags[i]);tsw+=TEXTW(m->ltsymbol);
     btsw=tsw;
     x = m->ww-tsw-rw;
@@ -788,13 +800,20 @@ drawbar(Monitor *m)
     // symbol
 	w = blw = TEXTW(m->ltsymbol);
 	drw_setscheme(drw, scheme[SchemeNorm]);
-	x = drw_text(drw, x, 0, w, rh, lrpad / 2, m->ltsymbol, 0);
+	drw_text(drw, x, 0, w, rh, lrpad / 2, m->ltsymbol, 0);
+    }
     // title
-    //w=m->ww-lw-rw-tsw;x=lw;
-    w=TEXTW(m->sel->name);x=(m->ww-w)*.5;
-	if (w > rh) {
+    if(m->showbar>2){
+        w=TEXTW(m->sel->name);x=(m->ww-w)*.5; // centred
+    }else{
+        w=m->ww-blsw-rw-tsw;x=blsw;
+    }
+    if (w > rh) {
 		if (m->sel) {
-			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
+            int v=SchemeNorm;
+            if(m->showbar>2);
+            else if(m==selmon)v=SchemeSel;
+			drw_setscheme(drw, scheme[v]);
 			drw_text(drw, x, 0, w, rh, lrpad / 2, m->sel->name, 0);
 			if (m->sel->isfloating)
 				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
@@ -1676,7 +1695,8 @@ setup(void)
 	if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
 		die("no fonts could be loaded.");
 	lrpad = drw->fonts->h;
-	bh = drw->fonts->h + 2;
+	//bh = drw->fonts->h + 2;
+	bh = drw->fonts->h + 2+bbbpx;
 	updategeom();
 	/* init atoms */
 	utf8string = XInternAtom(dpy, "UTF8_STRING", False);
@@ -1832,7 +1852,13 @@ tile(Monitor *m)
 void
 togglebar(const Arg *arg)
 {
-	selmon->showbar = !selmon->showbar;
+    if(showbar>1){
+        int vs[]={3,2,0};int i=0;
+        while(selmon->showbar!=vs[i++%3]);
+        selmon->showbar=vs[i%3];
+    }else{
+        selmon->showbar = !selmon->showbar;
+    }
 	updatebarpos(selmon);
 	XMoveResizeWindow(dpy, selmon->barwin, selmon->wx, selmon->by, selmon->ww, bh);
 	arrange(selmon);
