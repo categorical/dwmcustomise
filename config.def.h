@@ -3,7 +3,10 @@
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
 static const unsigned int snap      = 32;       /* snap pixel */
-static const int showbar            = 2;        /* 0 means no bar, 2 is customised*/
+
+static const int bbbpx=1;   // width of bar bottom border in px
+/* 2 and 3 are customised, M-b cycles through 0, 2 and 3 */
+static const int showbar            = 3;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 
 //static const char *fonts[]          = { "monospace:size=10" };
