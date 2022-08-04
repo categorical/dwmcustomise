@@ -59,7 +59,8 @@
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
-enum { SchemeNorm, SchemeSel,SchemeRgb}; /* color schemes */
+enum { SchemeNorm, SchemeSel,SchemeRgb,
+    SchemeR,SchemeG,SchemeY,SchemeO,}; /* color schemes */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
        NetWMWindowTypeDialog, NetClientList, NetLast }; /* EWMH atoms */
@@ -716,7 +717,31 @@ dirtomon(int dir)
 		for (m = mons; m->next != selmon; m = m->next);
 	return m;
 }
-
+int
+drw_textcolour(
+    Drw *drw, int x, int y, unsigned int w, unsigned int h,
+    unsigned int lp, const char *text, int inv){
+    
+    char *cp=strdup(text),*c=cp;
+    unsigned int n=4;
+    int dx=0;
+    while(1){
+        if(*c>n){c++;continue;}
+        char co=*c; // stops at colour byte or zero byte
+        if(co==0){ drw_text(drw,x+dx,y,w-dx,h,lp,cp,inv);break;}
+        *c=0; // terminates *cp
+        int u=TEXTW(cp)-lrpad+lp;
+        drw_text(drw,x+dx,y,u,h,lp,cp,inv);dx+=u;lp=0; // draws substr *cp
+        int v=SchemeNorm;switch(co){
+            case 1: v=SchemeR;break;
+            case 2: v=SchemeG;break;
+            case 3: v=SchemeO;break;
+        }
+        drw_setscheme(drw,scheme[v]);
+        cp=++c; // advances *cp
+    }
+    return 0;
+}
 void
 drawbar(Monitor *m)
 {
@@ -760,7 +785,8 @@ drawbar(Monitor *m)
 		drw_setscheme(drw, scheme[SchemeNorm]);
         blsw=TEXTW(lstext)-lrpad+rp+lp;
         lw=m->ww;
-        drw_text(drw,0,0,lw,rh,lp,lstext,0);
+        //drw_text(drw,0,0,lw,rh,lp,lstext,0);
+        drw_textcolour(drw,0,0,lw,rh,lp,lstext,0);
         if(rstext){
             rw=brsw=TEXTW(rstext)-lrpad+rp+lp;
             drw_text(drw,m->ww-rw,0,rw,rh,lp,rstext,0);
@@ -796,14 +822,15 @@ drawbar(Monitor *m)
     }
     // title
     if(m->showbar>2){
-        w=TEXTW(m->sel->name);x=(m->ww-w)*.5; // centred
+        w=TEXTW(m->sel->name);w=w>m->ww/2?m->ww/2:w;
+        x=(m->ww-w)*.5; // centred
     }else{
         w=m->ww-blsw-rw-tsw;x=blsw;
     }
     if (w > rh) {
 		if (m->sel) {
             int v=SchemeNorm;
-            if(m->showbar>2);
+            if(m->showbar>2)v=SchemeG;
             else if(m==selmon)v=SchemeSel;
 			drw_setscheme(drw, scheme[v]);
 			drw_text(drw, x, 0, w, rh, lrpad / 2, m->sel->name, 0);
