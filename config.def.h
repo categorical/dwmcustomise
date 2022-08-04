@@ -20,23 +20,28 @@ static const char dmenufont[]       = "dejavusansmono:size=12";
 //static const char col_gray3[]       = "#bbbbbb";
 //static const char col_gray4[]       = "#eeeeee";
 //static const char col_cyan[]        = "#005577";
-static const char col_gray1[]       = "black";
-static const char col_gray2[]       = "#5d8aa8";
-static const char col_gray3[]       = "#5d8aa8";
-static const char col_gray4[]       = "black";
-static const char col_cyan[]       = "#5d8aa8";
 static const char col_r[]="red";
 static const char col_g[]="green";
 static const char col_b[]="blue";
+static const char col_y[]="yellow";
+static const char col_o[]="orange";
+static const char col_black[]="black";
+static const char col_grey5[]="#5d8aa8";
 static const unsigned int baralpha = 0xbb;
 static const unsigned int borderalpha = 0xff;
 
 static const char *colors[][3]      = {
 	/*               fg         bg         border   */
-	[SchemeNorm] = { col_gray3, col_gray1, col_gray2 },
+	//[SchemeNorm] = { col_gray3, col_gray1, col_gray2 },
 	//[SchemeSel]  = { col_gray4, col_cyan,  col_cyan  },
-	[SchemeSel]  = { col_gray4, col_cyan,  col_r  },
+	[SchemeNorm] = { col_grey5, col_black, col_grey5},
+	[SchemeSel]  = { col_black, col_grey5, col_r},
     [SchemeRgb]={ col_r,col_g,col_b},
+    [SchemeR]={ col_r,col_black,col_b},
+    [SchemeG]={ col_g,col_black,col_b},
+    [SchemeY]={ col_y,col_black,col_b},
+    [SchemeO]={ col_o,col_black,col_b},
+
 };
 static const unsigned int alphas[][3]      = {
 	/*               fg      bg        border     */
@@ -83,7 +88,7 @@ static const Layout layouts[] = {
 
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
+static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_black, "-nf", col_grey5, "-sb", col_grey5, "-sf", col_black, NULL };
 static const char *termcmd[]  = { "urxvt", NULL };
 
 static Key keys[] = {
