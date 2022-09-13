@@ -29,7 +29,7 @@ _devel(){
     DESTDIR="$stage" make install PREFIX="$prefix"
     make clean
 }
-_develupdate(){
+_update(){
     local pkgname='dwm'
     if [ "$releaseid" = 'arch' ];then
         pacman -Q $pkgname &>/dev/null \
@@ -54,6 +54,8 @@ _setdwm(){
 
 _main(){ _usage(){ cat<<-EOF
 	SYNOPSIS
+	    $0 -u
+	    $0 --setdwm
 	    $0 --copysource|--copydist directory
 	EOF
     exit $1;}
@@ -62,7 +64,7 @@ _main(){ _usage(){ cat<<-EOF
         --copydist)_copydist "$2";break;;
         --setdwm)_setdwm;break;;
         --devel)_devel "$@";break;;
-        -u)_develupdate;break;;
+        -u)_update;break;;
         -h)_usage 0;;*)_usage 1;;
     esac;shift;done
 };_main "$@"
