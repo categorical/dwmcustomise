@@ -94,6 +94,7 @@ static const Layout layouts[] = {
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_black, "-nf", col_grey5, "-sb", col_grey5, "-sf", col_black, NULL };
 static const char *termcmd[]  = { "urxvt", NULL };
+static const char *termcmd2[]={"runtabbed","--urxvtc","-w",NULL};
 
 static const char *amixer1[]={"amixer","-q","set","Master","10%-",NULL};
 static const char *amixer2[]={"amixer","-q","set","Master","toggle",NULL};
@@ -138,6 +139,7 @@ static Key keys[] = {
     { 0,                    0x1008ff11,     spawn,              {.v=amixer1}},
     { 0,                    0x1008ff12,     spawn,              {.v=amixer2}},
     { 0,                    0x1008ff13,     spawn,              {.v=amixer3}},
+    { MODKEY|ShiftMask,     XK_Down,        spawn,              {.v = termcmd2}},
 };
 
 /* button definitions */
