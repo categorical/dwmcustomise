@@ -37,6 +37,7 @@ _update(){
         local f="$HOME/devel/xcustomise/machine/$HOSTNAME/packages.sh"
         "$f" --aur -c $pkgname
         "$f" --aur -s $pkgname
+        pkill -x dwm
     elif [ "$releaseid" = 'slackware' ];then
         local f="$HOME/devel/slackwarepkg/main.sh"
         "$f" "-oi$pkgname"
