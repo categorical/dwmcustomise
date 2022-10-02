@@ -235,7 +235,7 @@ static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
-
+static void xinitvisual();
 
 /* variables */
 static const char broken[] = "broken";
@@ -273,6 +273,9 @@ static Display *dpy;
 static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
+static Visual *visual;
+static int depth;
+static Colormap comap;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -1700,6 +1703,37 @@ setmfact(const Arg *arg)
 }
 
 void
+xinitvisual()
+{
+    XVisualInfo *us;
+    XRenderPictFormat *fmt;
+    int i,n;
+    XVisualInfo tpl={
+        .screen=screen,
+        .depth=32,
+        .class=TrueColor
+    };
+    long m=VisualScreenMask|VisualDepthMask|VisualClassMask;
+    us=XGetVisualInfo(dpy,m,&tpl,&n);
+    visual=NULL;
+    for(i=0;i<n;i++){
+        fmt=XRenderFindVisualFormat(dpy,us[i].visual);
+        if(fmt->type==PictTypeDirect&&fmt->direct.alphaMask){
+            visual=us[i].visual;
+            depth=us[i].depth;
+            comap=XCreateColormap(dpy,root,visual,AllocNone);
+            break;
+        }
+    }
+    XFree(us);
+    if(!visual){
+        visual=DefaultVisual(dpy,screen);
+        depth=DefaultDepth(dpy,screen);
+        comap=DefaultColormap(dpy,screen);
+    }
+}
+
+void
 setup(void)
 {
 	int i;
@@ -1714,7 +1748,8 @@ setup(void)
 	sw = DisplayWidth(dpy, screen);
 	sh = DisplayHeight(dpy, screen);
 	root = RootWindow(dpy, screen);
-	drw = drw_create(dpy, screen, root, sw, sh);
+    xinitvisual();
+	drw = drw_create(dpy, screen, root, sw, sh,visual,depth,comap);
 	if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
 		die("no fonts could be loaded.");
 	lrpad = drw->fonts->h;
@@ -1743,7 +1778,7 @@ setup(void)
 	/* init appearance */
 	scheme = ecalloc(LENGTH(colors), sizeof(Clr *));
 	for (i = 0; i < LENGTH(colors); i++)
-		scheme[i] = drw_scm_create(drw, colors[i], 3);
+		scheme[i] = drw_scm_create(drw, colors[i], 3,sch_a[i]);
 	/* init bars */
 	updatebars();
 	updatestatus();
@@ -1989,16 +2024,19 @@ updatebars(void)
 	Monitor *m;
 	XSetWindowAttributes wa = {
 		.override_redirect = True,
-		.background_pixmap = ParentRelative,
-		.event_mask = ButtonPressMask|ExposureMask
+		.event_mask = ButtonPressMask|ExposureMask,
+        .background_pixel=0,
+        .border_pixel=0,
+        .colormap=comap,
 	};
 	XClassHint ch = {"dwm", "dwm"};
 	for (m = mons; m; m = m->next) {
 		if (m->barwin)
 			continue;
-		m->barwin = XCreateWindow(dpy, root, m->wx, m->by, m->ww, bh, 0, DefaultDepth(dpy, screen),
-				CopyFromParent, DefaultVisual(dpy, screen),
-				CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
+		m->barwin = XCreateWindow(dpy, root, m->wx, m->by, m->ww, bh, 0,depth,
+				InputOutput,visual,
+				CWOverrideRedirect|CWEventMask|CWBackPixel|CWBorderPixel|CWColormap
+                , &wa);
 		XDefineCursor(dpy, m->barwin, cursor[CurNormal]->cursor);
 		XMapRaised(dpy, m->barwin);
 		XSetClassHint(dpy, m->barwin, &ch);

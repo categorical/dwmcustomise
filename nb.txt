@@ -1,6 +1,18 @@
 
-branches
-========
+add
+===
+- bar bottom border
+- bar text colour
+- bar status left right
+- bar centre title
+- bar tag no/right
+- monocle/tile 1 no border
+- tile margin pixel correct
+- rgba
+
+
+branch
+======
 
 main
 ----
@@ -8,7 +20,7 @@ main
     git merge customise
     git rebase upstream
 
-patch*
+~~patch*~~
 ------
 to make a patch branch:
 

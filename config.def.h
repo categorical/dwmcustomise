@@ -28,8 +28,8 @@ static const char col_y[]="yellow";
 static const char col_o[]="orange";
 static const char col_black[]="black";
 static const char col_grey5[]="#5d8aa8";
-static const unsigned int alpha0 = 0xbb;
-static const unsigned int alpha1 = 0xff;
+static const unsigned int abg=0xbb;
+static const unsigned int afg=0xff;
 
 static const char *colors[][3]      = {
 	/*               fg         bg         border   */
@@ -44,14 +44,14 @@ static const char *colors[][3]      = {
     [SchemeO]={ col_o,col_black,col_b},
 
 };
-static const unsigned int alphas[][3]={
-	/*                  fg      bg  border */
-	[SchemeNorm]=   { alpha1,alpha0,alpha1},
-	[SchemeSel] =   { alpha1,alpha0,alpha1},
-    [SchemeR]   =   { alpha1,alpha0,alpha1},
-    [SchemeG]   =   { alpha1,alpha0,alpha1},
-    [SchemeY]   =   { alpha1,alpha0,alpha1},
-    [SchemeO]   =   { alpha1,alpha0,alpha1},
+static const unsigned int sch_a[][3]={
+    /*              fg      bg      border */
+    [SchemeNorm]={  afg,    abg,    afg},
+    [SchemeSel] ={  afg,    abg,    afg},
+    [SchemeR]   ={  afg,    abg,    afg},
+    [SchemeG]   ={  afg,    abg,    afg},
+    [SchemeY]   ={  afg,    abg,    afg},
+    [SchemeO]   ={  afg,    abg,    afg},
 };
 
 
