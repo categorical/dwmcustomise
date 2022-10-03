@@ -8,6 +8,8 @@ static const int bbbpx=1;   // width of bar bottom border in px
 /* 2 and 3 are customised, M-b cycles through 0, 2 and 3 */
 static const int showbar            = 3;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
+static const int tlpx=6;    // client top and left margin in px
+
 
 //static const char *fonts[]          = { "monospace:size=10" };
 //static const char dmenufont[]       = "monospace:size=10";

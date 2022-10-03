@@ -52,8 +52,8 @@
 #define ISVISIBLE(C)            ((C->tags & C->mon->tagset[C->mon->seltags]))
 #define LENGTH(X)               (sizeof X / sizeof X[0])
 #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
-#define WIDTH(X)                ((X)->w + 2 * (X)->bw)
-#define HEIGHT(X)               ((X)->h + 2 * (X)->bw)
+#define WIDTH(X)                ((X)->w + 2 * (X)->bw+tlpx)
+#define HEIGHT(X)               ((X)->h + 2 * (X)->bw+tlpx)
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 
@@ -1420,12 +1420,41 @@ void
 resizeclient(Client *c, int x, int y, int w, int h)
 {
 	XWindowChanges wc;
-
 	c->oldx = c->x; c->x = wc.x = x;
 	c->oldy = c->y; c->y = wc.y = y;
 	c->oldw = c->w; c->w = wc.width = w;
 	c->oldh = c->h; c->h = wc.height = h;
 	wc.border_width = c->bw;
+
+    if(!c->isfloating&&!c->isfullscreen){
+        int n;
+        Client *c1;
+        // num of tiled
+	    for (n=0,c1=nexttiled(c->mon->clients);c1;c1=nexttiled(c1->next),n++);
+        void (*p)(Monitor *)=c->mon->lt[c->mon->sellt]->arrange;
+
+        if ((n==1&&p==tile)||p==monocle){
+            //remove border
+            wc.width        =c->w   =w+2*c->bw;
+            wc.height       =c->h   =h+2*c->bw;
+            wc.border_width =0;
+        }else if(p==tile){
+/*
+    +-------------------+-------------------+---+
+    |w+2*c->bw          |w+2*c->bw          |   |
+    |   +---------------+   +---------------+   |
+    |   |w+2*c->bw-tlpx |   |w+2*c->bw-tlpx |   |
+    +---+---------------+---+---------------+   |
+    |c->mon->ww                                 |
+    +-------------------------------------------+
+*/
+            wc.x            =c->x   =x+tlpx;
+            wc.y            =c->y   =y+tlpx;
+            wc.width        =c->w   =w-tlpx;
+            wc.height       =c->h   =h-tlpx;
+        }
+    }
+
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	configure(c);
 	XSync(dpy, False);
@@ -1825,20 +1854,23 @@ tile(Monitor *m)
 	if (n == 0)
 		return;
 
+    int rbpx=n>1?tlpx:0;
 	if (n > m->nmaster)
-		mw = m->nmaster ? m->ww * m->mfact : 0;
+		mw = m->nmaster ? (m->ww-rbpx) * m->mfact : 0;
 	else
-		mw = m->ww;
+		mw = m->ww-rbpx;
 	for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
 		if (i < m->nmaster) {
-			h = (m->wh - my) / (MIN(n, m->nmaster) - i);
+            // master
+			h = (m->wh-rbpx - my) / (MIN(n, m->nmaster) - i);
 			resize(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 0);
-			if (my + HEIGHT(c) < m->wh)
+			if (my + HEIGHT(c) < m->wh-rbpx)
 				my += HEIGHT(c);
 		} else {
-			h = (m->wh - ty) / (n - i);
-			resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 0);
-			if (ty + HEIGHT(c) < m->wh)
+            // slave
+			h = (m->wh-rbpx - ty) / (n - i);
+			resize(c, m->wx + mw, m->wy + ty, m->ww-rbpx - mw - (2*c->bw), h - (2*c->bw), 0);
+			if (ty + HEIGHT(c) < m->wh-rbpx)
 				ty += HEIGHT(c);
 		}
 }
