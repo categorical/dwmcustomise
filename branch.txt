@@ -1,6 +1,19 @@
 
-branches
-========
+
+customise add
+=============
+- bar bottom border
+- status text colour
+- left and right status
+- centre title
+- hide tags section
+- colour alpha
+- pixel correct tile margin
+- monocle and tile 1 no border
+
+
+branch
+======
 
 main
 ----

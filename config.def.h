@@ -7,7 +7,12 @@ static const unsigned int snap      = 32;       /* snap pixel */
 static const int bbbpx=1;   // width of bar bottom border in px
 /* 2 and 3 are customised, M-b cycles through 0, 2 and 3 */
 static const int showbar            = 3;        /* 0 means no bar */
+#define topdmenu 1  // 0 is bottom
+#if topdmenu
 static const int topbar             = 1;        /* 0 means bottom bar */
+#else
+static const int topbar=0;
+#endif
 static const int tlpx=6;    // client top and left margin in px
 
 
@@ -28,8 +33,8 @@ static const char col_y[]="yellow";
 static const char col_o[]="orange";
 static const char col_black[]="black";
 static const char col_grey5[]="#5d8aa8";
-static const unsigned int alpha0 = 0xbb;
-static const unsigned int alpha1 = 0xff;
+static const unsigned int abg=0xbb;
+static const unsigned int afg=0xff;
 
 static const char *colors[][3]      = {
 	/*               fg         bg         border   */
@@ -44,14 +49,14 @@ static const char *colors[][3]      = {
     [SchemeO]={ col_o,col_black,col_b},
 
 };
-static const unsigned int alphas[][3]={
-	/*                  fg      bg  border */
-	[SchemeNorm]=   { alpha1,alpha0,alpha1},
-	[SchemeSel] =   { alpha1,alpha0,alpha1},
-    [SchemeR]   =   { alpha1,alpha0,alpha1},
-    [SchemeG]   =   { alpha1,alpha0,alpha1},
-    [SchemeY]   =   { alpha1,alpha0,alpha1},
-    [SchemeO]   =   { alpha1,alpha0,alpha1},
+static const unsigned int sch_a[][3]={
+    /*              fg      bg      border */
+    [SchemeNorm]={  afg,    abg,    afg},
+    [SchemeSel] ={  afg,    abg,    afg},
+    [SchemeR]   ={  afg,    abg,    afg},
+    [SchemeG]   ={  afg,    abg,    afg},
+    [SchemeY]   ={  afg,    abg,    afg},
+    [SchemeO]   ={  afg,    abg,    afg},
 };
 
 
@@ -94,7 +99,11 @@ static const Layout layouts[] = {
 
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_black, "-nf", col_grey5, "-sb", col_grey5, "-sf", col_black, NULL };
+static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_black, "-nf", col_grey5, "-sb", col_grey5, "-sf", col_black
+#if !topdmenu
+    ,"-b"
+#endif
+    , NULL };
 static const char *termcmd[]  = { "urxvt", NULL };
 static const char *termcmd2[]={"runtabbed","--urxvtc","-w",NULL};
 
