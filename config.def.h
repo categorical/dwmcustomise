@@ -151,6 +151,7 @@ static Key keys[] = {
     { 0,                    0x1008ff12,     spawn,              {.v=amixer2}},
     { 0,                    0x1008ff13,     spawn,              {.v=amixer3}},
     { MODKEY|ShiftMask,     XK_Down,        spawn,              {.v = termcmd2}},
+    { MODKEY|ShiftMask,     XK_m,           centrefloat,        {0}},
 };
 
 /* button definitions */

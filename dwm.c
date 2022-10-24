@@ -213,6 +213,7 @@ static void tagmon(const Arg *arg);
 static void tile(Monitor *m);
 static void togglebar(const Arg *arg);
 static void togglefloating(const Arg *arg);
+static void centrefloat(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
 static void unfocus(Client *c, int setfocus);
@@ -1938,6 +1939,36 @@ togglefloating(const Arg *arg)
 		resize(selmon->sel, selmon->sel->x, selmon->sel->y,
 			selmon->sel->w, selmon->sel->h, 0);
 	arrange(selmon);
+}
+
+void
+centrefloat(const Arg *arg)
+{
+    Client *c=selmon->sel;
+    if(!c)return;
+    float m=1;int dy=0;
+    if(!c->isfloating){c->isfloating=1;c->oldbw=c->bw;c->bw=0;} // maximise
+    else if(c->bw==0){
+        if      (c->h+2*c->bw==c->mon->mh)dy=30;
+        else if (c->w+2*c->bw>c->mon->mw*.75)m=.75;
+        else if (c->w+2*c->bw>c->mon->mw*.5)m=.5;
+        else{c->isfloating=0;c->bw=c->oldbw;}                   // sink
+    }
+    if(c->isfloating){
+        if(c->bw>0){                                            // remove border
+            c->oldbw=c->bw;c->bw=0;
+            resizeclient(c,c->x,c->y,c->w+2*c->oldbw,c->h+2*c->oldbw);
+        }else{                                                  // or next size
+            c->bw=c->oldbw;
+            resizeclient(c
+            ,c->mon->mx+(int)(c->mon->mw*(1-m)/2)
+            ,c->mon->my+(int)(c->mon->mh*(1-m)/2)+dy
+            ,(int)(c->mon->mw*m)-2*c->bw
+            ,(int)(c->mon->mh*m)-2*c->bw-dy);
+            XRaiseWindow(dpy,c->win);
+        }
+    }
+    arrangemon(selmon);
 }
 
 void
